@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>App de Prueba</title>
+</head>
+<body>
+  <h2>Materias</h2>
+  <input type="text" id="materia-nombre" placeholder="Nombre de la materia">
+  <button onclick="crearMateria()">Crear Materia</button>
+
+  <!-- Lista para mostrar todas las materias -->
+  <h3>Todas las Materias</h3>
+  <ul id="all-materias-list"></ul>
+
+  <h2>Alumnos</h2>
+  <input type="text" id="alumno-nombre" placeholder="Nombre del alumno">
+  <select id="materias-dropdown"></select>
+  <button onclick="crearAlumno()">Crear Alumno</button>
+  
+  <!-- Lista para mostrar todos los alumnos -->
+  <h3>Todos los Alumnos</h3>
+  <ul id="all-alumnos-list"></ul>
+
+  <script>
+    async function fetchAPI(url, method, body) {
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+      return response.json();
+    }
+
+    async function crearMateria() {
+      const nombre = document.getElementById('materia-nombre').value;
+      if (nombre) {
+        await fetchAPI('http://localhost:3000/materias', 'POST', { nombre });
+        await cargarAllMaterias();
+        await cargarMateriasDropdown();
+        document.getElementById('materia-nombre').value = '';
+      }
+    }
+
+    async function cargarAllMaterias() {
+      const response = await fetchAPI('http://localhost:3000/materias', 'GET');
+      const allMateriasList = document.getElementById('all-materias-list');
+      allMateriasList.innerHTML = '';
+
+      response.materias.forEach(materia => {
+        const li = document.createElement('li');
+        li.textContent = materia.nombre;
+        allMateriasList.appendChild(li);
+      });
+    }
+
+    async function cargarMateriasDropdown() {
+    const response = await fetchAPI('http://localhost:3000/materias', 'GET');
+    const materiasDropdown = document.getElementById('materias-dropdown');
+    materiasDropdown.innerHTML = '';
+
+    response.materias.forEach(materia => {
+      const option = document.createElement('option');
+      option.value = materia.id;
+      option.textContent = materia.nombre;
+      materiasDropdown.appendChild(option);
+    });
+  }
+
+  async function crearAlumno() {
+    const nombre = document.getElementById('alumno-nombre').value;
+    const materiaId = document.getElementById('materias-dropdown').value;
+
+    if (nombre && materiaId) {
+      await fetchAPI('http://localhost:3000/alumnos', 'POST', { nombre, materia_id: materiaId });
+      await cargarAllAlumnos();
+      document.getElementById('alumno-nombre').value = '';
+    }
+  }
+
+  async function cargarAllAlumnos() {
+    const response = await fetchAPI('http://localhost:3000/alumnos', 'GET');
+    const allAlumnosList = document.getElementById('all-alumnos-list');
+    allAlumnosList.innerHTML = '';
+
+    response.alumnos.forEach(alumno => {
+      const li = document.createElement('li');
+      li.textContent = alumno.nombre;
+      allAlumnosList.appendChild(li);
+    });
+  }
+
+  // Cargar datos al inicio
+  window.onload = async function() {
+    await cargarAllAlumnos();
+    await cargarAllMaterias();
+    await cargarMateriasDropdown();
+  };
+  </script>
+</body>
+</html>
